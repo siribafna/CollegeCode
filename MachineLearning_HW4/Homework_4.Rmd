@@ -1,0 +1,124 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+### Problem 1 
+
+# Step 1 
+
+```{r}
+data(Auto)
+str(Auto)
+summary(Auto)
+set.seed(1234)
+i <- sample(1:nrow(Auto), nrow(Auto)*.75, replace=FALSE)
+train <- Auto[i,]
+test <- Auto[-i,]
+```
+
+# Step 2
+```{r}
+library(ISLR)
+simplelm <- lm(mpg~cylinders+displacement+horsepower, data=train)
+summary(simplelm)
+plot(train$mpg~train$cylinders+train$displacement+train$horsepower, xlab="predictors", ylab="mpg")
+```
+
+# Step 3
+```{r}
+testpred <- predict(simplelm, newdata=test)
+correlation <- cor(testpred, test$mpg)
+mse <- mean((testpred - test$mpg) ^2)
+print("Correlation:")
+print(correlation)
+print("MSE:")
+print(mse)
+```
+
+# Step 4
+```{r}
+library(caret)
+
+fit <- knnreg(train[,2:8],train[,1])
+testpred2 <- predict(fit, test[,2:8])
+correlation_knn <- cor(testpred2, test$mpg)
+mse_knn <- mean((testpred2 - test$mpg) ^2)
+print(paste("correlation: ", correlation_knn))
+print(paste("mse: ", mse_knn))
+```
+
+# Step 5 - Analysis
+
+a) The correlation for linear regression was .81 whereas the correlation for the kNN algorithm was .88. 
+b) The MSE for linear regression was 21.75 whereas the correlation for the kNN algorithm was 14.58
+c) Both my correlation values and MSE values showed a drastic change (for the good), however, since we gave few predictors and a low k-value for the kNN model, we were able to set up an efficient model. The mean-squared error was smaller because we fit the data in the model and kNN only creates a cluster between the neighbors and test instance, compared to linear regression which performs it on the whole dataset. 
+d) The lower value of k=1 as a default set us at a low bias, high variance model. Additionally, having only 3 predictors gave the algorithm a good boost in an efficient model. Again, I think this happened as linear regression tests on the entire train/test data set whereas the kNN model tests only based on the neighbor instance making the test more specific and related to the set. 
+
+### Problem 2
+
+# Step 1
+
+```{r}
+library(mlbench)
+summary(BreastCancer)
+
+BreastCancer$Cell.small <- as.factor(c(ifelse (BreastCancer$Cell.size==1, 1, 0)))
+BreastCancer$Cell.regular <- as.factor(c(ifelse (BreastCancer$Cell.shape==1, 1, 0)))
+
+set.seed(1234)
+i2 <- sample(1:nrow(BreastCancer), nrow(BreastCancer)*.75, replace=FALSE)
+train_glm <- BreastCancer[i2,]
+test_glm <- BreastCancer[-i2,]
+```
+
+# Step 2
+
+```{r}
+glm1 <- glm(Class~Cell.small+Cell.regular, data=train_glm, family="binomial")
+summary(glm1)
+```
+
+# Step 3
+```{r}
+probs <- predict(glm1, newdata=test_glm, type="response")
+pred <- ifelse(probs>.5, 2, 1)
+acc <- mean(pred==as.integer(test_glm$Class))
+library(e1071)
+confusionMatrix(as.factor(pred), as.factor(as.integer(test_glm$Class)))
+print(acc)
+```
+
+# Step 4
+```{r}
+library(class)
+fit_knn <- knn(train_glm[,12:13], test_glm[,12:13], train_glm[,11], k=1 )
+results <- fit_knn == test_glm[,11]
+accuracy_knn <- length(which(results == TRUE)) / length(results)
+table(results, fit_knn)
+print(accuracy_knn)
+```
+
+
+# Step 5
+```{r}
+library(class)
+fit_knn_5 <- knn(train_glm[,c(2, 3, 4, 5, 6, 8, 9, 10)], test_glm[,c(2, 3, 4, 5, 6, 8, 9, 10)], train_glm[,11], k=1 )
+results_5 <- fit_knn_5 == test_glm[,11]
+accuracy_knn_5 <- length(which(results_5 == TRUE)) / length(results_5)
+table(results_5, fit_knn_5)
+print(accuracy_knn_5)
+```
+
+
+# Step 6
+a) From the logistic regression, I got my accuracy to be 0.8914286 and when completing the first knn function, the accuracy was the exact same. Without using more predictors, kNN only finds the same results as the logistic regression, kNN finding the closest neighbors is comparing to the same predictors as logistic regression, resulting in exactly the same accuracy.   
+b) The accuracy for using knn with all predictors significantly improved in step 5 compared to the rest of the algorithms previously. When bringing in all the predictors, the accuracy becomes better as different columns have different impacts on the labeled column, helping its accuracy rates. 
+
+
+
+
+
+
+
+ 
