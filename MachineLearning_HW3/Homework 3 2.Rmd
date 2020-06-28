@@ -1,0 +1,185 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+# Siri Bafna Homework 3 
+
+# Step 1
+
+```{r}
+str(BreastCancer)
+```
+```{r}
+attach(BreastCancer)
+str(BreastCancer)
+head(BreastCancer)
+summary(BreastCancer$Class)
+```
+```{r}
+per <- prop.table(table(BreastCancer$Class))
+print(per)
+```
+a) There are 699 observations/instances
+b) The target column is Class
+c) There are 9 total predictors, all of them being either of ordered or nomial type.
+d) Malignant takes up 34.5% of the observations.
+
+# Step Two
+```{r}
+glm0 <- glm(Class~Cell.size+Cell.shape, data=BreastCancer, family=binomial)
+summary(glm0)
+```
+
+This warning occured because the data model has the appearance of fitted values at only one or zero, they are so close to these values that double precision can't distinguish them. A solution would be to use linear separation so there can be higher probabilities differentiating 1, and 0. Source: (stat.ethz.ch/pipermail/r-help/2012-March/307352.html)
+
+# Step 3
+
+```{r}
+BreastCancer$Cell.small <- as.factor(c(ifelse (BreastCancer$Cell.size==1, 1, 0)))
+BreastCancer$Cell.regular <- as.factor(c(ifelse (BreastCancer$Cell.shape==1, 1, 0)))
+
+summary(BreastCancer$Cell.regular)
+summary(BreastCancer$Cell.small)
+summary(BreastCancer$Cell.shape)
+summary(BreastCancer$Cell.size)
+```
+
+I think this new step will further help the case of "fitted probabilities with 1 and 0 because it created higher probabilities of them being on only one or zero. Clearly it is one in our situation as you can see how many instances of one there are in Cell.shape and Cell.size compared to the new columns. These additions help show a clearer, more black-and-white differentiation.
+
+# Step 4
+```{r}
+attach(BreastCancer)
+par(mfrow=c(1, 2))
+cdplot(Class~Cell.shape)
+cdplot(Class~Cell.size)
+```
+
+
+In the observations, I can clearly see that both columns are at their critical points at one and then drastically begin to increase/decrease their probability levels. Both these graphs share a severe increase for malignant and decrease for benign at the size = 1 point. Therefore, it makes sense that we used size = 1 to better distribute our data in the new columns. 
+
+# Step 5
+```{r}
+attach(BreastCancer)
+par(mfrow=c(1, 2))
+plot(Class, Cell.small, main="CELL SMALL", ylab="", varwidth=TRUE)
+plot(Class, Cell.regular, main="CELL REGULAR", ylab="", varwidth=TRUE)
+par(mfrow=c(1, 2))
+cdplot(Class~Cell.small)
+cdplot(Class~Cell.regular)
+```
+```{r}
+# calculations
+smallsum <- sum(BreastCancer$Cell.small==1 & Class=="malignant")
+sstotal <- sum(BreastCancer$Cell.small==1)
+smallPer <- (smallsum / sstotal) * 100
+
+nsmallsum <- sum(BreastCancer$Cell.small==0 & Class=="malignant")
+nstotal <- sum(BreastCancer$Cell.small==0)
+nsmallPer <- (nsmallsum / nstotal) * 100
+
+regsum <- sum(BreastCancer$Cell.regular==1 & Class=="malignant")
+rtotal <- sum(BreastCancer$Cell.regular==1)
+regPer <- (regTotal / rtotal) * 100
+
+nregtotal <- sum(BreastCancer$Cell.regular==0 & Class=="malignant")
+nrtotal <- sum(BreastCancer$Cell.regular==0)
+nregPer <- (nregtotal / nrtotal) * 100
+```
+After reviewing the graphs as well as the following computations, it's clear that comparing the benign and malignant variables is very drastic as benign has way higher values, compared to malignant which takes up a very small percentage of the data. With that being said, since the logistic regression is more obvious to predict, and differences are drastic, these two columns would make good predictors.
+a. 1.04% is small and malignant
+b. 75.24% is not small and malignant
+c. .56% is regular and malignant
+d. 69.08% is not regular and malignant
+
+# Step 6
+```{r}
+set.seed(1234)
+i <- sample(1:nrow(BreastCancer), .80*nrow(BreastCancer), replace=FALSE)
+train <- BreastCancer[i,]
+test <- BreastCancer[-i,]
+```
+
+# Step 7
+```{r}
+glm1 <- glm(Class~Cell.small+Cell.regular, data=train, family="binomial")
+summary(glm1)
+```
+
+a) All predictors, Cell.small and Cell.regular are both really good predictors as noted by the extremely low P-values. 
+b) Additionally, since the residual deviance is significantly lower than the null deviance, this is more evidence that these predictors are good to use. 
+c) AIC score, being at 261.73 is a good AIC score as it's relatively low which means that the likelihood of accuracy for future values is higher. 
+
+# Step 8
+
+```{r}
+probs <- predict(glm1, newdata=test, type="response")
+pred <- ifelse(probs>.5, 2, 1)
+acc <- mean(pred==as.integer(test$Class))
+library(e1071)
+confusionMatrix(as.factor(pred), as.factor(as.integer(test$Class)))
+```
+
+I got 88.6% accuracy. With 2 false positives and 45 false negatives, there were more false negatives than false positives.
+
+# Step 9
+
+```{r}
+coeffs <- glm1$coefficients["Cell.small1"]
+```
+
+a) The coefficient I got is -4.683.
+b) The coefficient means that is a difference in the log odds of the Class variable, since this is a negative coefficient, it means that the odds of the test are lower than that of the reference group.
+c)
+```{r}
+exp(coeffs)
+```
+d)
+```{r}
+sumOfsm <- sum(Cell.small==1 & Class=="malignant")
+sumOfs <- sum(Cell.small==1)
+probabilityOfd <- sumOfsm/sumOfs
+```
+
+These are very close and small probabilities. This is because when comparing Cell.Small to a test data set, or to a bigger scale of BreastCancer, the probabilities of it being malignant were very very low, so our results are close because the probabilities of malignancy did not change from train/full to test data, it stayed low. 
+
+# Step 10
+```{r}
+glm_small <- glm(Class~Cell.small, data=train, family="binomial")
+glm_regular <- glm(Class~Cell.regular, data=train, family="binomial")
+anova(glm_small, glm_regular, glm1)
+summary(glm1)
+summary(glm_small)
+summary(glm_regular)
+
+```
+
+The AIC scores: 261.73, 304.75, 374.02, corresponding with AIC scores for glm1, glm_small, and glm_regular are similar and consistent of the residual deviances for their consecutive models and in fact with each other. With them being lesser than the deviances, each of them successfully suggest a good model. Separate AIC scores for regular and small are good models individually, but when they come together, they give a lower AIC score, even with the same null deviance for all models. Along with that, the results of the Res. DF show the same result for glm_small and glm_regular, however, show a lower result for model3, glm1, resulting in the obvious idea that glm1 is a better model since it has both Cell.Small and Cell.Regular combined, instead of individually. 
+
+# Step 11
+```{r}
+library(e1071)
+nb1 <- naiveBayes(Class~Cell.small + Cell.regular, data=train)
+nb1
+```
+
+a) 65.3% of the training data is benign.
+b) likelihood - 98% of malignant sample = not small
+c) likelihood - 98.9% of malignant sample = not regular
+
+# Step 12
+```{r}
+p1 <- predict(nb1, newdata=test, type="class")
+pred2 <- ifelse(p1>.5, 2, 1)
+table(p1, test$Class)
+acc2 <- mean(p1==test$Class)
+```
+
+I got the same exact result for the table, as well as the accuracy at 88.6, I think this was expected as we are using the same exact predictors with the same exact dataset.
+
+```{r}
+library(caret)
+confusionMatrix(as.factor(p1), as.factor(test$Class))
+```
+
+I got the same exact result for the table, as well as the accuracy at 88.6, I think this was expected as we are using the same exact predictors with the same exact dataset. In regards to the confusion matrices, the results were the exact same. From positive class which is benign, to Kappa value and even the CI. The results were the exact same and consistent, this means that the predictors were a solid key to consistency in the model, and produce the exact same likelihood in both Logistic Regression, and Naive Bayes.
