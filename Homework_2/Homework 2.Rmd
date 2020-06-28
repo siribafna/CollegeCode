@@ -1,0 +1,108 @@
+---
+title: "Homework 2"
+output: html_notebook
+---
+
+Homework 2 by Siri Bafna
+
+# STEP 1
+
+```{r}
+summary(Auto)
+set.seed(1234)
+i <- sample(1:nrow(Auto), nrow(Auto)*.75, replace=FALSE)
+train <- Auto[i,]
+test <- Auto[-i,]
+```
+
+
+# STEP 2
+
+```{r}
+library(ISLR)
+
+simplelm <- lm(mpg~horsepower, data=train)
+summary(simplelm)
+```
+
+```{r}
+pred <- predict(simplelm, data=train)
+mse <- mean((pred - train$mpg)^2)
+mse
+
+```
+
+The MSE value of 23.39 shows a relatively high mean squared error rate. 
+
+# Step 3
+a. mpg = -0.1578 * horsepower + 39.9359
+b.At correlation between the two being at -.7784, it's clear that they have a relatively strong relationship.
+c. They have a negative correlation. As horsepower increases, the mpg decreases.
+d. The R^2 is at .60, it's towards 1 but not completely there. This means the model we have is average, not beneficial/good. The RSE shows that the model is about 4.906 units of y off. The F-static, which has a low p-value helps put confidence 
+e. At 23.39, this relatively low MSE shows that the predicted values were relatively close to the actual values.
+
+# Step 4
+```{r}
+plot(train$mpg~train$horsepower, xlab="horsepower", ylab="mpg")
+abline(lm(train$mpg~train$horsepower), col="blue")
+pred2 <- predict(simplelm, data.frame(horsepower=98))
+```
+
+# Step 5
+
+```{r}
+testpred <- predict(simplelm, newdata=test)
+cor(testpred, test$mpg)
+mse2 <- mean((testpred - test$mpg) ^2)
+```
+
+The higher value of MSE compared to the train model, at 23.39, it's obvious this model, being test data is likely to be more of a error-prone model, which explains the higher set of MSE. 
+# Step 6
+`
+```{r}
+par(mfrow=c(2,2))
+plot(simplelm)
+```
+
+The residuals show a trend of nonlinearity in the first plot-graph. This is also shown in the scale-location, it seems to be relatively flattening instead of linear.
+
+# Step 7
+```{r}
+model2 <- lm(log(mpg)~horsepower, data=train);
+summary(model2)
+```
+
+The first model's R^2 is .6136, whereas the second model is .6975. Since the second model is closer to 1, it is considered a better model within the two.
+
+# Step 8
+```{r}
+plot(log(train$mpg)~train$horsepower, xlab="horsepower", ylab="log(mpg)")
+abline(lm(log(train$mpg)~train$horsepower), col="blue")
+```
+Compared to the first model, the second model seems more closer to the best-fit line, essentially representing a better model. 
+
+```{r}
+testpred2 <- predict(model2, newdata=test)
+cor(testpred2, log(test$mpg))
+```
+The correlation here is at .81, whereas, in the first model it is .76. This means the correlation between these two variables is greater than that of the previous model. 
+
+```{r}
+mse3 <- mean((testpred2 - log(test$mpg))^2)
+```
+
+The MSE is significantly lower than the first model, comparing .035 to 25.71. This fast difference suggests that when comparing these two models with MSE, the second model has a dramatically less mean squared error. 
+
+# Step 10
+```{r}
+par(mfrow=c(2,2))
+plot(model2)
+```
+
+The residuals seem far less when comparing the two models. Residuals in the first model are extremely far apart from the significant line, however, in this model, the data points seem more closer and tighter to the fitted line. 
+
+
+
+
+
+

@@ -1,0 +1,57 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+# Step 1
+
+```{r}
+pairs(Auto)
+```
+
+Positive correlations:with x, y being:(displacement, cylinders), (horsepower, weight), and (cylinders, weight).
+
+Negative correlations: with x, y beng: (mpg, cylinders), (horsepower, mpg), (acceleration, weight).
+
+# Step 2
+```{r}
+print(cor(Auto[,-9]))
+pairs(cor(Auto[,-9]))
+```
+The plots displacement with the strongest relationship included (displacement, cylinders) and (cylinders, displacement) which both had the same correlation value at .9508233, indicating an incredible strong, positive relationship.
+
+The weakest relationships included .1815 correlation value between year and origin, and origin, year, indicating they barely have any correlation. 
+
+# Step 3
+```{r}
+factor(Auto$origin)
+multiplelm <- lm(mpg~.-name, data=Auto)
+summary(multiplelm)
+
+```
+
+The variables weight and year seem to have the strongest relationships as their P value is significantly low, followed by origin. 
+
+# Step 4
+```{r}
+plot(multiplelm)
+```
+
+The leverage point is at 14, which is unusually off from the prominent section of the graph which is more integrated.
+```{r}
+str(Auto[14,])
+```
+
+# Step 5
+```{r}
+secondlm <- lm(mpg~weight*year*origin, data=Auto)
+summary(secondlm)
+```
+
+Since the R^2 value of the second model is greater and closer to one, it's clear that this model was better fit compared to the first model. The RSE was also less at 3.055, whereas in the first model, it was 3.328. 
+
+```{r}
+anova(multiplelm, secondlm)
+```
+
+Since RSS is lower for model 2, this is proof that model 2 outperformed model 1. 
