@@ -1,0 +1,128 @@
+---
+title: "Homework 1"
+author: "Siri Bafna"
+date: "6/6/2020"
+output: html_document
+---
+
+# Step 1
+```{r}
+str(Boston) # helps give a good review for the columns and their types in the dataset
+```
+
+The data set is a deep dive into the Housing Values for suburbs in Boston. The dataset itself includes 506 rows and 14 columns. The columns include things such as per capita crime rates, proportions of residential land for lots over 25,000 sq.ft, and many others. 
+
+# Step 2 a
+```{r}
+library(MASS)
+head(Boston) # by default reports back the first 6 columns 
+```
+# Step 2 b
+```{r}
+library(MASS)
+tail(Boston, n=2) # num = 2 makes the last two columns come from the end
+```
+
+# Step 2 c
+```{r}
+library(MASS)
+Boston[5,] # all the columns for the row = 5
+```
+
+# Step 2 d
+```{r}
+library(MASS)
+head(Boston[1]) # all the rows for the first column
+```
+# Step 2 e
+```{r}
+library(MASS)
+colnames(Boston) #colnames allows all the variable names to show
+```
+
+# Step 3 
+
+```{r}
+library(MASS)
+mean(Boston[,1]) # finds the mean
+median(Boston[,1]) # finds the median
+range(Boston[,1]) # finds the range - these are in built functions
+
+```
+
+# Step 4
+```{r}
+library(MASS)
+hist(Boston$crim, 
+     main="Histogram for Per Capita Crime Rates in Boston", #controls title
+     xlab="Crime Rate", #controls x label
+     ylab="Frequency of Cases", # controls y label
+     xlim=c(0, 88), # range for x
+     ylim=c(0, 510)) #range for y
+```
+
+The result of this histogram tells me that the data is significantly left-skewed. This means that lower crime rates are more common than higher crime rates. 
+
+# Step 5
+
+This negative correlation of -.388 suggests that crime and 
+```{r}
+library(MASS)
+cor(Boston$crim, Boston$medv) # finds correlation for both these columns
+```
+The negative correlation shows that these two columns are not directly correlated to each other but somewhat negatively impacting each other.
+
+# Step 6
+
+```{r}
+library(MASS)
+plot(Boston$rm, Boston$medv,
+     main="Average Rooms and their Median Value of Houses",
+     xlab="Average Number of Rooms",
+     ylab="Median Value of Homes",
+     pch=12, # controls the style of the point
+     col=11) # controls the color of the points
+cor(Boston$rm, Boston$medv) # in built correlation function
+```
+
+The graph evidently shows a concentration in around 5-7 average number of rooms with the median value being concentrated at anywhere from 15-30 thousand. The correlation value being .69 suggests a positive, but imperfect correlation, meaning an increase in average rooms is somewhat related to the median value of the homes.
+
+#Step 7
+```{r}
+plot(factor(Boston$chas), Boston$medv) # factor within the chas coordinate point itself
+```
+
+Without adding chas as a factor, the graph strictly only showed X values as being either 0 or 1. After adding chas as a factor, the box plot shows how average homes around 15-25 at chas value 0, which means the tract does not bound river, whereas anywhere from around 20-35, the tract did bound river.
+
+# Step 8
+
+```{r}
+summary(Boston$rad)
+unique(Boston$rad)
+sum(Boston$rad == 24) / sum(Boston$rad) # divides the sum of where it's 24 vs. all neighorhoods
+```
+
+Rad describes an index based on accessibility to radial highways. With summary, I get the min, max, and quarter-based averages for 1st and 3rd quarter. The unique function gives me different distinct values, to see all the potential results in the column. The sum gave me 132 neighborhoods that had 24 as their rad value, this was about 2% of the overall neighborhoods. 
+
+# Step 9
+
+```{r}
+test <- c(Boston$rad)
+far <- ifelse(test == 24, "TRUE","FALSE") # if true, then set true value as the point, else false value 
+plot(factor(far), Boston$medv) # plot the factor of far and then show plot
+```
+
+
+# Step 10 
+
+```{r}
+cols <- c(1, 6, 13, 14)
+x <-summary(Boston[cols])
+max_position <- which.max(Boston$medv) # max position is stored as a which.max variable
+Boston[max_position, cols] # finds specific cols for the specific row
+```
+
+This row shows the crime rate for this location to be 1.46, whereas city-wide it is 3.6, meaning the crime rate is lower in this neighborhood. Since this is the location with the highest median value of homes, it makes sense as this is a well-funded, wealthy area. The lstat city-wide is 12.65, in the neighborhood it's 1.73, and the average room number is 7.4. Overall, this neighborhood seems significantly wealthy and well-kept, well-funded, with higher status, higher income individuals. 
+
+
+
