@@ -1,2 +1,0 @@
-### Java Code 
-This folder includes exercises, homeworks, semester projects done specifically in Java. 
