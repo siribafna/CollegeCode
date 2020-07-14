@@ -1,0 +1,163 @@
+---
+title: "Project 2 - Regression"
+author: "Siri Bafna"
+output: html_notebook
+---
+
+# Weather History Data Analysis
+
+Source: Kaggle.com
+
+Link: https://www.kaggle.com/budincsevity/szeged-weather
+
+Number of Observations: 98.5K
+#
+## Data Cleaning
+
+#### Factoring character variables, cleaning NA's, reading in data
+
+Data cleaning for this data set included making the character variables, which was Summary and Daily Summary into factors, as well as not including 'preciptype', 'loud_cover', 'date', as these did not directly affect the the Humidity which is the target. 
+
+```{r}
+weatherHistory <- read.csv("/Users/siri/Downloads/weatherHistory.csv", header=TRUE) 
+weatherHistory <- weatherHistory[,c(2,4,5,6,7, 8, 9, 11, 12)]
+summary(weatherHistory) # data function # 1
+
+weatherHistory$Summary <- as.factor(weatherHistory$Summary)
+weatherHistory$Daily.Summary <- as.factor(weatherHistory$Daily_Summary)
+
+```
+#
+#### Divide into train and test
+```{r}
+set.seed(1234)
+i <- sample(1:nrow(weatherHistory), .75*nrow(weatherHistory), replace=FALSE)
+train <- weatherHistory[i,]
+test <- weatherHistory[-i,]
+```
+
+The feature selection of the following algorithms include all columns except Summary and Daily summary, as they resulted in error prone results and more than 32 levels of results. 
+
+# Linear Regression - Algorithm 1
+
+```{r}
+library(ISLR)
+lm1 <- lm(Humidity~Temperature+Wind_Speed+Visibility+Apparent_Temperature+Wind_Bearing+Pressure, data=train)
+summary(lm1) # data exploration # 2
+```
+
+#### Accuracy and Predictions for Linear Regression
+
+```{r}
+pred <- predict(lm1, newdata=test)
+```
+
+```{r}
+acc <- cor(pred, test$Humidity)
+mse <- mean((pred - test$Humidity) ^2)
+print("Correlation:")
+print(acc)
+print("MSE:")
+print(mse)
+```
+
+##### Commentary on Linear Regression
+The linear model for this data set was a pretty average performance, with an accuracy percentage of 68%. This is lower than how efficient linear regression usually performs, and it seems like it predicted all but Pressure as an efficient predictor. Additionally, the p-value is relatively low which is a pro, whereas R-squared value is .4 which is average! Therefore, with it's good and bad aspects, it was a pretty average performance.
+
+## Data Exploration Plots
+
+```{r}
+plot(lm1) # data exploration plot # 1
+```
+
+```{r}
+plot(train$Humidity~train$Temperature, xlab="Temperature", ylab="Humidity")
+abline(lm(train$Humidity~train$Temperature), col="blue")
+```
+
+# kNN - Algorithm # 2
+```{r}
+library(caret)
+fit <- knnreg(train[,c(2,3,5,6,7,8)],train[,4])
+```
+
+#### Accuracy and Predictions for kNN
+
+```{r}
+testpred <- predict(fit, test[,c(2,3,5,6,7,8)])
+correlation_knn <- cor(testpred, test$Humidity)
+mse_knn <- mean((testpred - test$Humidity) ^2)
+print(paste("correlation: ", correlation_knn))
+print(paste("mse: ", mse_knn))
+```
+
+##### Commentary on kNN
+
+The performance on kNN was optimal at a rate of 78% along with a low mse at .014. The use of nearest neighbors was efficient in this case as all the predictors do effectively impact the algorithm. 
+
+
+# Decision Trees - Algorithm # 3
+```{r}
+library(rpart)
+dtree <- rpart(Humidity~Temperature+Wind_Speed+Visibility+Apparent_Temperature+Wind_Bearing+Pressure, data=train)
+dtree
+summary(dtree) # data exploration function # 3
+```
+
+
+```{r}
+plot(dtree) # data exploration plot # 4
+text(dtree, cex=0.4, pretty=0)
+```
+
+#### Accuracy and Predictions on Decision Trees
+
+```{r}
+pred <- predict(dtree, newdata=test)
+table(pred, test$Humidity) # data exploration function # 5
+acc <- cor(pred, test$Humidity)
+print("Accuracy for Decision Trees")
+print(acc)
+```
+
+The results of the Decision Trees are slightly above average with the accuracy of 74%. With decision trees, it also creates levels up to 663 for the decision tree. 
+
+# Random Forest - Ensemble Method
+
+I had to trim the amount of observations we use for Random Forest as it does not efficiently run with big sets, and additionally had the predictors just set at Temperature to test the strongest predictor out of them as a wayof curiosity.
+
+```{r}
+weatherHist <- weatherHistory[1:50000,]
+i <- sample(1:nrow(weatherHist), .75*nrow(weatherHist), replace=FALSE)
+train_em <- weatherHist[i,]
+test_em <- weatherHist[-i,]
+str(train_em) # data function for exploration
+```
+
+```{r}
+library(randomForest)
+rf <- randomForest(Humidity~Temperature, data=train_em, importance=TRUE)
+rf
+```
+
+```{r}
+pred2 <- predict(rf, newdata=test_em, type="response")
+acc_rf <- cor(pred2, test_em$Humidity)
+print("Accuracy for Random Forest")
+print(acc_rf)
+```
+
+The performance of Random Forest was average, similar to linear regression. With a variance of 45.09 and an accuracy of 64%, it had higher than normal variance levels, all which result it to be an average performance.
+
+## Results Analysis
+
+kNN Accuracy: 78.324
+|
+Decision Trees Accuracy: 74.01
+|
+Linear Regression Accuracy: 68.50601
+|
+
+  In this data set, kNN performed the best with an accuracy of 78%, Decision Trees were close after and the lowest quality of performance happened to be linear regression. These results surprised me as according to the plots, target to predictors, the pattern was obviously linear. Therefore, linear regression should have been able to outperform more than it actually did. According to the model, most attributes were strong predictors for the data. 
+  However, kNN did outperform all the other algorithms because it uses an efficient similarity measure when comparing algorithms. A good pattern recognition technique that resulted in good performance because all the predictors were related to the target and therefore resulted in obvious patterns in data.
+  Decision Trees were averagely performing with an accuracy of 74% and an MSE of 3.831911, which is incredibly low. The MSE should have resulted in a higher accuracy rate but didn't as decision trees tend to be unstable and highly bias. 

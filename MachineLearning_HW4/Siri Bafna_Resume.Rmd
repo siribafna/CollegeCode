@@ -1,0 +1,160 @@
+---
+title: "Homework 5"
+output: html_notebook
+---
+
+# Problem 2
+
+### Step 1
+
+```{r}
+# a
+library(ISLR)
+data(Default)
+str(Default)
+#b
+dim(Default)
+names(Default)
+#c
+set.seed(1234)
+#d
+i <- sample(1:nrow(Default), nrow(Default)*.80, replace=FALSE)
+train <- Default[i,]
+test <- Default[-i,]
+```
+
+### Step 2
+```{r}
+#a 
+simpleglm <- glm(default~., data=train, family="binomial")
+#b
+summary(simpleglm)
+#c
+p1 <- predict(simpleglm, newdata=test, type="response")
+pred <- ifelse(p1>.5, "Yes", "No")
+#d
+accuracy <- mean(pred==test$default)
+print(accuracy)
+```
+
+### Step 3
+```{r}
+#a
+library(tree)
+dtree <- tree(default~., data=train)
+#b
+summary(dtree)
+#c
+p2 <- predict(dtree, newdata=test, type="class")
+#d
+accuracy2 <- mean(p2==test$default)
+print(accuracy2)
+```
+
+### Step 4
+```{r}
+plot(dtree)
+text(dtree, cex=0.9, pretty=0)
+dtree
+```
+# Problem 2 
+
+### Step 1
+```{r}
+#a,b,c loading the data and setting it up
+Heart <- read.csv("/Users/siri/Downloads/Heart.csv", header=TRUE) 
+Heart <- Heart[(!is.na(Heart$Ca)),]
+Heart <- Heart[(!is.na(Heart$Thal)),]
+Heart$ChestPain <- as.factor(Heart$ChestPain)
+Heart$Thal <- as.factor(Heart$Thal)
+Heart$AHD <- factor(Heart$AHD, c("Yes", "No"))
+Heart = subset(Heart, select = -c(X))
+#d
+set.seed(2017)
+j <- sample(1:nrow(Heart), nrow(Heart)*.80, replace=FALSE)
+train_heart <- Heart[j,]
+test_heart <- Heart[-j,]
+
+```
+
+### Step 2
+```{r}
+#a 
+pb2glm <- glm(AHD~., data=train_heart, family="binomial")
+#b
+summary(pb2glm)
+#c
+p3 <- predict(pb2glm, newdata=test_heart, type="response")
+pred3 <- ifelse(p3>.5, "Yes", "No")
+#d
+accuracy3 <- mean(pred3==test_heart$AHD)
+print(accuracy3)
+```
+
+### Step 3
+```{r}
+#a
+library(tree)
+dtreeheart <- tree(AHD~., data=train_heart)
+#b
+summary(dtreeheart)
+#c
+p4 <- predict(dtreeheart, newdata=test_heart, type="class")
+#d
+accuracy4 <- mean(p4==test_heart$AHD)
+print(accuracy4)
+```
+
+### Step 4
+```{r}
+#a
+plot(dtreeheart)
+text(dtreeheart, cex=0.40, pretty=10)
+#b
+dtreeheart
+```
+
+### Step 5
+```{r}
+#a
+cv_tree <- cv.tree(dtreeheart)
+#b
+cv_tree
+#c
+par(mfrow=c(1, 2))
+plot(cv_tree$size, cv_tree$dev, type="b")
+plot(cv_tree$k, cv_tree$dev, type="b")
+```
+
+### Step 6
+```{r}
+#a
+tree_pruned <- prune.tree(dtreeheart, best=10)
+#b
+plot(tree_pruned)
+text(tree_pruned, cex=.6, pretty=0)
+```
+
+### Step 7
+```{r}
+#a
+p5 <- predict(tree_pruned, newdata=test_heart, type="class")
+#d
+accuracy4 <- mean(p5==test_heart$AHD)
+print(accuracy4)
+```
+
+# Problem 1 Answers
+1) The most important variables were student and balance, whereas income was not. 
+2) The accuracy of the logistic model was 97.75 and 97.65 for the decision tree model.
+3) The nodes of the decision tree shift from before observation to being observed and then creating the right node. Therefore, the left node was "No" before observing, and remained "No after observing. 
+4) If the inequality condition is satisfied and holds majority, it goes towards the right, if not satisfied and is the minority, it goes in the left node.
+5) No, it is not necessary to prune this tree as it is not highly sensitive to variance. The tree shows a consistent form of responses and therefore it is not likely that the data is going to overfit. 
+
+# Problem 2 Answers
+1) Important variables include Sex, ChestPainnonanginal, Chestpaintypical, and Ca. 
+2) "Thal","ChestPain","Oldpeak","MaxHR","RestBP","Ca","Chol","Age","Sex","Fbs","Slope" are the variables using in decision tree.
+3) The logistic regression's accuracy was .16667 whereas the one for the decision tree was .8. These clearly had a drastic change in accuracy when comparing, as expected. 
+4) The accuracy of the pruned tree was .7667
+5) Decision tree might be more efficient for a doctor as since the relationships are so complex in this specific data set, decision trees will outperform logistic relations. 
+

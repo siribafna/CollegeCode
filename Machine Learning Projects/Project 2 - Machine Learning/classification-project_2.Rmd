@@ -1,0 +1,190 @@
+---
+title: "Project 2 - Classification"
+author: "Siri Bafna"
+output: html_notebook
+---
+
+# Census Income Data Analysis
+
+Source: UCI Machine Learning Repository
+
+Link: http://archive.ics.uci.edu/ml/datasets/Census+Income
+
+Number of Observations: 48.8K
+## Data Cleaning
+
+#### Factoring character variables, cleaning NA's, reading in data
+#
+I began data cleaning by removing the column "fnlwgt" because it had no relationship to income.
+
+Since the data had nulls as '?' instead of NA, I ran the gsub() function on the dataset, replacing '?'s with NA's. I then used the is.na() to remove any bad data from the data set. The columns with null data included workclass, occupation and native_country. 
+
+I then factored many of the variables as they were character based, not integer and ended my data cleaning by verifying my changes using str().
+
+```{r}
+censusIncome <- read.csv("/Users/siri/Downloads/CensusIncome.csv", header=TRUE) 
+censusIncome <- censusIncome[,c(1,2,4,6,7,8, 9, 10, 11, 12, 13, 14, 15)]
+censusIncome$workclass <- gsub("?", NA, censusIncome$workclass, fixed = TRUE);
+censusIncome$native_country <- gsub("?", NA, censusIncome$native_country, fixed = TRUE);
+
+censusIncome$occupation <- gsub("?", NA, censusIncome$occupation, fixed = TRUE);
+censusIncome <- censusIncome[!is.na(censusIncome$workclass),]
+censusIncome <- censusIncome[!is.na(censusIncome$occupation),]
+censusIncome <- censusIncome[!is.na(censusIncome$native_country),]
+
+censusIncome$workclass <- as.factor(censusIncome$workclass)
+censusIncome$education <- as.factor(censusIncome$education)
+censusIncome$marital_status <- as.factor(censusIncome$marital_status)
+censusIncome$occupation <- as.factor(censusIncome$occupation)
+censusIncome$relationship <- as.factor(censusIncome$relationship)
+censusIncome$race <- as.factor(censusIncome$race)
+censusIncome$sex <- as.factor(censusIncome$sex)
+censusIncome$native_country <- as.factor(censusIncome$native_country)
+censusIncome$income_level <- as.factor(censusIncome$income_level)
+
+str(censusIncome) # data exploration function # 1
+```
+#
+#### Divide into train and test
+```{r}
+set.seed(1234)
+i <- sample(1:nrow(censusIncome), .6*nrow(censusIncome), replace=FALSE)
+train <- censusIncome[i,]
+test <- censusIncome[-i,]
+```
+#
+## Data Exploration
+
+```{r}
+# data exploration function # 2
+per_no_capital_gain <- sum(censusIncome$capital_gain==0)/length(censusIncome$capital_gain)
+print("Percentage of Instances Without Capital Gain")
+print(per_no_capital_gain)
+
+print("Division of Income based on Sex")
+table(censusIncome$sex) # data exploration function # 3
+
+```
+
+#
+#### Plots For Data Exploration
+```{r}
+par(mfrow=c(1, 2))
+cdplot(censusIncome$income_level~censusIncome$workclass)
+cdplot(censusIncome$income_level~censusIncome$education)
+```
+
+As shown below in all of my models, my feature consisted of all the columns except native_country. This is because native_country contains more than 32 levels and therefore is unable to be modeled with. All my other features were chosen because they were obviously related to income (workclass, education, occupation, race, sex, etc) and all contribute to it, as known theoretically. 
+
+
+## Logistic Regression - Algorithm # 1 
+
+```{r}
+glm1 <- glm(income_level~.-native_country, data=train, family=binomial)
+summary(glm1) # data exploration function # 4
+```
+
+
+#
+#### Accuracy and Predictions for Logistic Regression
+
+```{r}
+probs <- predict(glm1, newdata=test, type="response")
+pred <- ifelse(probs>.5, 2, 1)
+
+table(test$income_level, probs >= .5) # data exploration function # 5
+```
+
+```{r}
+acc <- mean(pred==as.integer(test$income_level))
+print("Accuracy for Logistic Regression:")
+print(acc)
+```
+
+##### Commentary on Logistic Regression
+The logistic regression worked significantly well resulting in a accuracy of 84%. Predictors such as occupation, workclass, sex, race, education were clearly very strong predictors in managing the income level, as shown through '***'. The residual deviance - being at 17501, shows a relatively good response of the algorithm with predictors included, supported by the AIC of 17611.
+#
+
+## Naive Bayes - Algorithm # 2 
+
+```{r}
+library(e1071)
+nb1 <- naiveBayes(income_level~.-native_country, data=train)
+nb1
+```
+#
+#### Accuracy and Predictions for Naive Bayes 
+
+```{r}
+p1 <- predict(nb1, newdata=test, type="class")
+acc <- mean(p1==test$income_level) #calculating the accuracy
+print("Accuracy for Naive Bayes:")
+print(acc)
+```
+
+##### Commentary on Naive Bayes
+The Naive Bayes algorithm also works relatively well on this data set with an accuracy of 81%. Since the algorithm performs simple likelihood chances, it gave accurate results in the A-priori probabilities for the income level. 
+#
+
+## Decision Trees - Algorithm 3
+
+```{r}
+library(tree)
+dtree1 <- tree(income_level~.-native_country, data=train)
+summary(dtree1)
+```
+#
+#### Accuracy and Predictions for Decision Trees
+
+```{r}
+p4 <- predict(dtree1, newdata=test, type="class")
+accuracy4 <- mean(p4==test$income_level)
+print("Accuracy for Decision Trees:")
+print(accuracy4)
+```
+
+##### Commentary for Decision Trees
+The decision tree algorithm worked quite efficiently, almsot at the same level of accuracy as logistic regression in that it gave similar residual mean deviance, and had a significantly low misclassification error rate, assuring that the algorithm received and partitioned the data efficiently. 
+
+# Random Forest - Ensemble Method
+
+```{r}
+library(randomForest)
+set.seed(1234)
+rf <- randomForest(income_level~.-native_country, data=train, importance=TRUE)
+pred <- predict(rf, newdata=test, type="response")
+acc_rf <- mean(pred==test$income_level)
+print("Accuracy for Random Forest")
+print(acc_rf)
+```
+
+#### Commentary for Random Forest
+Random Forest outperformed all the other algorithms significantly with an accuracy of 85.9%
+
+#
+## Results Analysis
+
+Logistic Regression Accuracy: 84.58732
+Decision Trees Accuracy: 84.05108
+Naive Bayes Accuracy: 81.1156
+
+  As a natural classification algorithm, it is expected that Logistic Regression outperformed on this specific dataset as the predictors were clearly very connected to the target and were easier to predict compared to hypothetical predictors that weren't as correlated to the target (income). In comparison to Naive Bayes, both algorithms showed relatively the same p-values on strong predictors, assuring that they both understood the data. But logistic regression has always outperformed naive bayes on simpler datasets, this dataset would be considered simple as its predictors were expectable and clear.   
+  Naive Bayes did not perform as well for certain predictors, such as "relationship," where it separated the predictors very conditionally, making "Husband" over 70% of the probability.
+  
+  Decision Trees, on the other hand, showed a relatively good residual deviance at .7037 which was just about as close to logistic regression's residual deviance. Therefore it justifies why the algorithms' performance were so close to each other. Since Decision Trees do partitions over classification data sets using recursive, greedy methods, and do not rely on dummy variables, they were able to efficiently perform on this data set. 
+  
+  Using the R script, the algorithms were able to understand how significant predictors such as occupation, workclass, education levels, gender and race were all able to have extremely strong impact on income-levels, whereas predictors such as native_country were not as strong. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
