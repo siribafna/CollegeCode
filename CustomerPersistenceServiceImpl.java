@@ -66,6 +66,12 @@ public class CustomerPersistenceServiceImpl implements CustomerPersistenceServic
 			c2.setLastName(c1.getLastName());
 			c2.setGender(c1.getGender());
 			c2.setDob(c1.getDob());
+//			for (Address a : c1.getAddressList()) {
+//				c2.addAddress(a);
+//			}
+//			for (CreditCard c : c1.getCreditCardList()) {
+//				c2.addCreditCard(c);
+//			}
 			em.getTransaction().commit();
 		} catch (Exception ex) {
 			em.getTransaction().rollback();
