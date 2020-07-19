@@ -61,9 +61,17 @@ public class CustomerPersistenceServiceImpl implements CustomerPersistenceServic
 	public void update(Customer c1) throws SQLException, DAOException {
 		try {
 			em.getTransaction().begin();
-			Customer c2 = em.find(Department.class, c1.getDeptID());
-			c2.setDeptName(c1.getDeptName());
-			c2.setDescription(c1.getDescription());
+			Customer c2 = em.find(Customer.class, c1.getId());
+			c2.setFirstName(c1.getFirstName());
+			c2.setLastName(c1.getLastName());
+			c2.setGender(c1.getGender());
+			c2.setDob(c1.getDob());
+//			for (Address a : c1.getAddressList()) {
+//				c2.addAddress(a);
+//			}
+//			for (CreditCard c : c1.getCreditCardList()) {
+//				c2.addCreditCard(c);
+//			}
 			em.getTransaction().commit();
 		} catch (Exception ex) {
 			em.getTransaction().rollback();
